@@ -317,7 +317,11 @@ async def _pay(page, debug: bool):
 
 async def run(debug: bool = False):
     if not LTA_EMAIL or not LTA_PASSWORD:
-        raise SystemExit("Set LTA_EMAIL and LTA_PASSWORD in .env before running.")
+        raise SystemExit(
+            "LTA_EMAIL and LTA_PASSWORD are not set.\n"
+            "  Local: add them to .env\n"
+            "  GitHub Actions: add LTA_EMAIL and LTA_PASSWORD as repository secrets"
+        )
 
     target = next_sunday()
     log.info("Target: %s | preferred %s, fallback %s", target, TARGET_TIME, FALLBACK_TIME)
