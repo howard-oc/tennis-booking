@@ -1,0 +1,54 @@
+name: Book Hilly Fields Tennis
+
+on:
+  schedule:
+    # Monday 00:05 BST (= Sunday 23:05 UTC) — LTA opens bookings 6 days before Sunday
+    - cron: '5 23 * * 0'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Override target date (YYYY-MM-DD). Defaults to next Sunday.'
+        required: false
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Book court
+        env:
+          LTA_EMAIL:    ${{ secrets.LTA_EMAIL }}
+          LTA_PASSWORD: ${{ secrets.LTA_PASSWORD }}
+          CARD_NUMBER:  ${{ secrets.CARD_NUMBER }}
+          CARD_EXPIRY:  ${{ secrets.CARD_EXPIRY }}
+          CARD_CVV:     ${{ secrets.CARD_CVV }}
+          CARD_NAME:    ${{ secrets.CARD_NAME }}
+          TARGET_DATE:  ${{ inputs.date }}
+        run: xvfb-run --auto-servernum python book.py
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: booking-screenshots
+          path: screenshots/
+          retention-days: 7
